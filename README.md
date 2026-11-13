@@ -1,0 +1,20 @@
+# SG6043 Airfoil Optimization
+
+This is a research class project (VIPS408) where I tried to improve the SG6043, a low Reynolds number airfoil, using a neural network surrogate and Bayesian optimization. I described the airfoil's shape with nine coefficients per surface, generated 300 variations with Sobol sampling, and ran every one through NeuralFoil at Re = 500,000 and Mach 0 across angles of attack from -2 to 12 degrees, which gave 4,500 data points. I trained a neural network on that data to predict lift, drag and moment, then used Bayesian optimization with a Gaussian process on top of it to search for a better airfoil at 6 degrees.
+
+The results are mixed, and I think that is the most interesting part. The best of the 300 sampled designs held up when I checked it directly. At 2 degrees it improves the lift to drag ratio from 70.6 to 89.2, about 26%, and at 6 degrees the best sampled design reaches 68.5 against 29.1 for the baseline. The Bayesian optimization result did not hold up. The surrogate predicted a lift to drag ratio of 100.5 at 6 degrees, but when I ran the exported geometry through NeuralFoil directly it came out at 22.1, which is worse than the baseline. A second export of the same design gave 20.1. My best guess is that the optimizer found a spot where the surrogate was wrong, since the search was allowed to go 10% past the range of the sampled designs, though I did not rule out a problem in the export. You can reproduce the NeuralFoil numbers by running `scripts/verify_designs.py`.
+
+The surrogate itself scored well on a held-out test set, with R2 of 0.990 for lift, 0.970 for drag and 0.971 for moment. Those numbers are optimistic, though. I split the data by row, and each design appears at 15 angles of attack, so nearly identical designs ended up in both the training and test sets. A split by design would give a more honest picture.
+
+A few other things to know before trusting any of this. The optimized geometry is not a clean closed airfoil: in `artifacts/optimized_airfoil_comparison.png` the baseline fit is already about 9% thick at the leading edge and the optimized design about 17%, with trailing edges 3% and 8% thick. None of this is CFD. NeuralFoil is itself a neural network trained on XFOIL results, and nothing here was validated against experiments or a full flow solver. Everything is for a single condition, Re = 500,000 and Mach 0.
+
+If I kept working on it, I would first split the data by design and report R2 on designs the model has never seen. Next I would constrain the geometry so the leading edge closes and the trailing edge has a sensible thickness. Then I would check every Bayesian candidate against NeuralFoil or XFOIL during the search and keep the search close to the sampled region.
+
+To run it, install the requirements and run the verification script:
+
+```
+pip install -r requirements.txt
+python scripts/verify_designs.py
+```
+
+The code is in `scripts/` and the data, trained model, figures and results are in `artifacts/`, including the 300 generated airfoils in `artifacts/DOE_airfoils/`. The full pipeline runs in this order: `vips_airfoil_order_study.py` fits the baseline, `vips_does_upper_lower.py` generates the designs, `run_neuralfoil.py` creates the data, `train_model.py` trains the surrogate, and `bayesian_optimization.py` runs the search. The comparison scripts and `generate_optimized_airfoil_dat.py` handle plots and exports. Running them overwrites files in `artifacts/`. I made the file paths relative when I cleaned the project up and only re-ran `verify_designs.py` afterward, so the other scripts may need small fixes. Earlier Colab exports are in `scripts/archive/`, and `running_xfoil.py` is an XFOIL runner that I did not use for the data here. The `.pkl` files are pickles, so only load files you trust.

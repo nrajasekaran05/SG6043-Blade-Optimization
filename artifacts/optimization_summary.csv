@@ -1,0 +1,7 @@
+Metric,Baseline,Optimized,Change
+Max Cl/Cd,70.65,89.19,+26.2%
+Alpha (deg),2.0,2.0,-
+Cl,0.5312,0.6902,+29.9%
+Cd,0.007520,0.007739,+2.9%
+Cm,-0.0745,-0.0976,-
+Design ID,0,34,-

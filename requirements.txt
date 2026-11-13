@@ -1,0 +1,12 @@
+numpy
+pandas
+matplotlib
+scipy
+scikit-learn
+tensorflow
+scikit-optimize
+joblib
+aerosandbox
+neuralfoil
+svgwrite
+ezdxf
